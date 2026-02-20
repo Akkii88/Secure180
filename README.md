@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
 </p>
 
-<h1 align="center">🛡️ Secure360</h1>
+<h1 align="center">🛡️ Secure180</h1>
 <h3 align="center">Real-Time Credit Card Fraud Detection System with AutoML</h3>
 
 <p align="center">
@@ -35,7 +35,7 @@
 
 ## 🎯 Overview
 
-**Secure360** is a complete real-time fraud detection system that simulates a production environment for credit card transaction monitoring. It combines **AutoML model training**, **real-time transaction simulation**, **instant fraud scoring**, and a **live cyberpunk-themed dashboard** — all in a single, self-contained application.
+**Secure180** is a complete real-time fraud detection system that simulates a production environment for credit card transaction monitoring. It combines **AutoML model training**, **real-time transaction simulation**, **instant fraud scoring**, and a **live cyberpunk-themed dashboard** — all in a single, self-contained application.
 
 ### Key Highlights
 
