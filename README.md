@@ -15,21 +15,6 @@
 
 ---
 
-## 📌 Table of Contents
-
-- [Overview](#-overview)
-- [System Architecture](#-system-architecture)
-- [Data Pipeline](#-data-pipeline)
-- [ML Pipeline](#-ml-pipeline)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Quick Start](#-quick-start)
-- [API Reference](#-api-reference)
-- [Dashboard](#-dashboard)
-- [How It Works](#-how-it-works)
-- [Contributing](#-contributing)
-- [License](#-license)
 
 ---
 
