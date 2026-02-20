@@ -15,9 +15,6 @@
 
 ---
 
-
----
-
 ## 🎯 Overview
 
 **Secure180** is a complete real-time fraud detection system that simulates a production environment for credit card transaction monitoring. It combines **AutoML model training**, **real-time transaction simulation**, **instant fraud scoring**, and a **live cyberpunk-themed dashboard** — all in a single, self-contained application.
