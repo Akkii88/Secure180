@@ -1,0 +1,42 @@
+# Virtual environments
+.venv/
+.venv_py310/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+
+# Trained models (binary)
+**/saved_model/*.pkl
+
+# Generated data
+**/creditcard_sample.csv
+**/model_comparison.json
+
+# Logs
+*.log
+**/fraud_alerts.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
