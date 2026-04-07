@@ -7,7 +7,12 @@ tunes hyperparameters, and persists the final model + comparison metrics.
 
 import json
 import os
+import sys
 import pandas as pd
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from pycaret.classification import (
     setup, compare_models, save_model, pull, tune_model, finalize_model,
 )
@@ -17,8 +22,8 @@ from config import MODEL_SAVE_PATH
 def train_model():
     """Train, compare, and tune models. Returns a dict of best-model metrics."""
     data_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "fraud_detection_system/data/creditcard_sample.csv",
+        os.path.dirname(os.path.dirname(__file__)),
+        "data/creditcard_sample.csv",
     )
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset not found at {data_path}")

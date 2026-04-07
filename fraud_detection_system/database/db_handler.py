@@ -6,7 +6,7 @@ Manages all CRUD operations for transactions and model performance metrics.
 
 import sqlite3
 from datetime import datetime
-from config import DATABASE_PATH
+from config import DATABASE_PATH  # type: ignore[attr-defined,no-redef]
 
 
 def get_db_connection():

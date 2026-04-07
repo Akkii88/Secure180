@@ -7,7 +7,7 @@ with distinct statistical profiles for legitimate vs. fraudulent activity.
 
 import uuid
 import random
-import numpy as np
+import numpy as np  # type: ignore[attr-defined]
 from datetime import datetime
 
 
@@ -49,7 +49,7 @@ class TransactionSimulator:
         transaction = {
             "transaction_id": str(uuid.uuid4()),
             "timestamp": datetime.now().isoformat(),
-            "amount": round(amount, 2),
+            "amount": round(amount, 2),  # type: ignore[arg-type]
             "merchant_category": random.choice(self.CATEGORIES),
             "location": location,
         }

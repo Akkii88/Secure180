@@ -6,9 +6,9 @@ returning fraud probability, prediction label, and risk level.
 """
 
 import time
-import pandas as pd
-from pycaret.classification import load_model, predict_model
-from config import MODEL_SAVE_PATH, HIGH_RISK_THRESHOLD
+import pandas as pd  # type: ignore[attr-defined]
+from pycaret.classification import load_model, predict_model  # type: ignore[attr-defined]
+from config import MODEL_SAVE_PATH, HIGH_RISK_THRESHOLD  # type: ignore[attr-defined,no-redef]
 
 
 class FraudDetector:
@@ -51,7 +51,7 @@ class FraudDetector:
 
         pred_label = predictions["prediction_label"].iloc[0]
         pred_score = predictions["prediction_score"].iloc[0]
-        processing_time_ms = round((time.time() - start_time) * 1000, 2)
+        processing_time_ms = round((time.time() - start_time) * 1000, 2)  # type: ignore[arg-type]
 
         # Convert PyCaret score to fraud probability
         fraud_prob = pred_score if pred_label == 1 else (1 - pred_score)

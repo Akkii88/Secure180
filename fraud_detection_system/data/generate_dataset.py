@@ -6,10 +6,10 @@ applies SMOTE oversampling, and exports to CSV for model training.
 """
 
 import os
-import numpy as np
-import pandas as pd
-from sklearn.datasets import make_classification
-from imblearn.over_sampling import SMOTE
+import numpy as np  # type: ignore[attr-defined]
+import pandas as pd  # type: ignore[attr-defined]
+from sklearn.datasets import make_classification  # type: ignore[attr-defined]
+from imblearn.over_sampling import SMOTE  # type: ignore[attr-defined]
 
 
 def generate_data():

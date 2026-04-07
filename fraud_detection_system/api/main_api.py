@@ -13,19 +13,25 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect  # type: ignore[attr-defined]
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore[attr-defined]
+from fastapi.responses import FileResponse  # type: ignore[attr-defined]
 
-from realtime.transaction_simulator import TransactionSimulator
-from realtime.fraud_detector import FraudDetector
-from alerts.alert_system import alert_system
-from database.db_handler import (
+from realtime.transaction_simulator import TransactionSimulator  # type: ignore[attr-defined,no-redef]
+from realtime.fraud_detector import FraudDetector  # type: ignore[attr-defined,no-redef]
+from alerts.alert_system import alert_system  # type: ignore[attr-defined,no-redef]
+from database.db_handler import (  # type: ignore[attr-defined,no-redef]
     insert_transaction, get_recent_transactions, get_fraud_transactions,
     get_fraud_stats, get_hourly_stats, get_category_stats,
     get_latest_model_info, init_db,
 )
-from config import TRANSACTION_INTERVAL_SECONDS
+from config import TRANSACTION_INTERVAL_SECONDS  # type: ignore[attr-defined,no-redef]
+
+# Power BI Real-time streaming
+try:
+    from power_bi.powerbi_pusher import push_to_power_bi
+except ImportError:
+    push_to_power_bi = None  # Fallback if Power BI not configured
 
 app = FastAPI(title="FraudShield AI", version="1.0")
 
@@ -86,6 +92,13 @@ async def transaction_loop():
         insert_transaction(result)
         alert_system.log_transaction(result)
 
+        # Push to Power BI for real-time dashboard
+        if push_to_power_bi:
+            try:
+                push_to_power_bi(result)
+            except Exception:
+                pass  # Don't fail the main flow if Power BI fails
+
         await manager.broadcast({"type": "transaction", "data": result})
 
         # Broadcast stats every 5 transactions
@@ -132,13 +145,13 @@ def _get_stats_internal() -> dict:
 @app.get("/")
 async def get_dashboard():
     """Serve the main dashboard HTML."""
-    return FileResponse("dashboard/index.html")
+    return FileResponse(os.path.join(os.path.dirname(__file__), "dashboard", "index.html"))
 
 
 @app.get("/dashboard")
 async def get_dashboard_alias():
     """Alias for the dashboard."""
-    return FileResponse("dashboard/index.html")
+    return FileResponse(os.path.join(os.path.dirname(__file__), "dashboard", "index.html"))
 
 
 @app.get("/health")

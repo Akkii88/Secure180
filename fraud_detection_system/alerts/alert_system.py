@@ -7,7 +7,7 @@ for real-time transaction monitoring.
 
 import os
 from datetime import datetime
-from colorama import Fore, Style, init
+from colorama import Fore, Style, init  # type: ignore[attr-defined]
 
 init(autoreset=True)
 
