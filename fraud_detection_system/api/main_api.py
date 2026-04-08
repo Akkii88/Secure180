@@ -21,9 +21,14 @@ from realtime.transaction_simulator import TransactionSimulator  # type: ignore[
 from realtime.fraud_detector import FraudDetector  # type: ignore[attr-defined,no-redef]
 from alerts.alert_system import alert_system  # type: ignore[attr-defined,no-redef]
 from database.db_handler import (  # type: ignore[attr-defined,no-redef]
-    insert_transaction, get_recent_transactions, get_fraud_transactions,
-    get_fraud_stats, get_hourly_stats, get_category_stats,
-    get_latest_model_info, init_db,
+    insert_transaction,
+    get_recent_transactions,
+    get_fraud_transactions,
+    get_fraud_stats,
+    get_hourly_stats,
+    get_category_stats,
+    get_latest_model_info,
+    init_db,
 )
 from config import TRANSACTION_INTERVAL_SECONDS  # type: ignore[attr-defined,no-redef]
 
@@ -48,6 +53,7 @@ detector = FraudDetector()
 
 
 # ── WebSocket Connection Manager ──────────────────────────────────────────────
+
 
 class ConnectionManager:
     """Manages active WebSocket connections and broadcasts messages."""
@@ -75,6 +81,7 @@ manager = ConnectionManager()
 
 
 # ── Background Transaction Loop ──────────────────────────────────────────────
+
 
 async def transaction_loop():
     """Generate, score, store, and broadcast transactions continuously."""
@@ -111,6 +118,7 @@ async def transaction_loop():
 
 # ── Lifecycle Events ─────────────────────────────────────────────────────────
 
+
 @app.on_event("startup")
 async def startup_event():
     init_db()
@@ -123,6 +131,7 @@ async def startup_event():
 
 # ── Internal Helpers ─────────────────────────────────────────────────────────
 
+
 def _get_stats_internal() -> dict:
     """Build a combined stats payload including model info."""
     stats = get_fraud_stats()
@@ -130,10 +139,16 @@ def _get_stats_internal() -> dict:
 
     if not model_info and detector.model is not None:
         model_name = type(detector.model).__name__
-        friendly = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', model_name).replace('Classifier', '').strip()
+        friendly = (
+            re.sub(r"(?<=[a-z])(?=[A-Z])", " ", model_name)
+            .replace("Classifier", "")
+            .strip()
+        )
         model_info = {
             "model_name": friendly or model_name,
-            "f1": None, "auc": None, "accuracy": None,
+            "f1": None,
+            "auc": None,
+            "accuracy": None,
         }
 
     stats["model_info"] = model_info
@@ -142,16 +157,23 @@ def _get_stats_internal() -> dict:
 
 # ── REST Endpoints ───────────────────────────────────────────────────────────
 
+
 @app.get("/")
 async def get_dashboard():
     """Serve the main dashboard HTML."""
-    return FileResponse(os.path.join(os.path.dirname(__file__), "dashboard", "index.html"))
+    dashboard_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "dashboard", "index.html"
+    )
+    return FileResponse(dashboard_path)
 
 
 @app.get("/dashboard")
 async def get_dashboard_alias():
     """Alias for the dashboard."""
-    return FileResponse(os.path.join(os.path.dirname(__file__), "dashboard", "index.html"))
+    dashboard_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "dashboard", "index.html"
+    )
+    return FileResponse(dashboard_path)
 
 
 @app.get("/health")
@@ -189,6 +211,7 @@ def model_comparison_endpoint():
                 loaded = json.loads(content)
                 if isinstance(loaded, str):
                     import ast
+
                     return ast.literal_eval(loaded)
                 return loaded
             except Exception:
@@ -209,6 +232,7 @@ def category_stats_endpoint():
 
 
 # ── WebSocket Endpoint ───────────────────────────────────────────────────────
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
