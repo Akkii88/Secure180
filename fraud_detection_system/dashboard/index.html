@@ -657,37 +657,86 @@
     <!-- Banner removed to prevent overlapping KPIs -->
     <div class="page">
 
-        <!-- KPI ROW -->
-        <div class="kpi-row">
-            <div class="kpi-card total-card">
-                <div class="kpi-label">📦 Total Transactions</div>
-                <div class="kpi-value accent" id="kpi-total">0</div>
-                <div class="kpi-sub">How many payments were checked so far</div>
+        <!-- DATA SOURCE HEADERS - SIDE BY SIDE LAYOUT -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:15px;">
+            <div style="background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,212,255,0.05));border:1px solid var(--accent);border-radius:8px;padding:12px 20px;">
+                <div style="color:var(--accent);font-size:0.8rem;font-weight:700;letter-spacing:1px;">📅 DATA TILL DATE (HISTORICAL)</div>
+                <div style="color:var(--text);font-size:0.8rem;margin-top:4px;">All transactions from database</div>
             </div>
-            <div class="kpi-card fraud-card">
-                <div class="kpi-label">🚨 Fraud Found</div>
-                <div class="kpi-value danger" id="kpi-fraud">0</div>
-                <div class="kpi-sub">Payments flagged as suspicious</div>
+            <div style="background:linear-gradient(135deg,rgba(0,255,157,0.15),rgba(0,255,157,0.05));border:1px solid var(--accent2);border-radius:8px;padding:12px 20px;">
+                <div style="color:var(--accent2);font-size:0.8rem;font-weight:700;letter-spacing:1px;">⚡ FRESH / CURRENT SESSION</div>
+                <div style="color:var(--text);font-size:0.8rem;margin-top:4px;">New transactions this session</div>
             </div>
-            <div class="kpi-card rate-card">
-                <div class="kpi-label">📊 Fraud Rate</div>
-                <div class="kpi-value warn" id="kpi-rate">0.00%</div>
-                <div class="kpi-sub">% of payments that were fraudulent</div>
+        </div>
+
+        <!-- BOTH KPI ROWS SIDE BY SIDE -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
+            <!-- KPI ROW - DATA TILL DATE (LEFT) -->
+            <div style="background:rgba(10,17,40,0.5);border:1px solid rgba(0,212,255,0.2);border-radius:12px;padding:15px;">
+                <div style="margin-bottom:12px;">
+                    <span style="color:var(--accent);font-size:0.85rem;font-weight:700;">📅 DATA TILL DATE</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                    <div class="kpi-card total-card" style="padding:12px 10px;">
+                        <div class="kpi-label" style="font-size:0.6rem;">📦 Total</div>
+                        <div class="kpi-value accent" style="font-size:1.4rem;" id="kpi-total">0</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Transactions</div>
+                    </div>
+                    <div class="kpi-card fraud-card" style="padding:12px 10px;">
+                        <div class="kpi-label" style="font-size:0.6rem;">🚨 Fraud</div>
+                        <div class="kpi-value danger" style="font-size:1.4rem;" id="kpi-fraud">0</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Detected</div>
+                    </div>
+                    <div class="kpi-card rate-card" style="padding:12px 10px;">
+                        <div class="kpi-label" style="font-size:0.6rem;">📊 Rate</div>
+                        <div class="kpi-value warn" style="font-size:1.4rem;" id="kpi-rate">0%</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Fraud %</div>
+                    </div>
+                    <div class="kpi-card saved-card" style="padding:12px 10px;">
+                        <div class="kpi-label" style="font-size:0.6rem;">💰 Saved</div>
+                        <div class="kpi-value success" style="font-size:1.2rem;" id="kpi-saved">$0</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Amount</div>
+                    </div>
+                    <div class="kpi-card speed-card" style="grid-column:span 2; padding:12px 10px;">
+                        <div class="kpi-label" style="font-size:0.6rem;">⚡ Detection Speed</div>
+                        <div class="kpi-value purple" style="font-size:1.4rem;" id="kpi-hist-speed">—</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Avg processing time</div>
+                    </div>
+                </div>
             </div>
-            <div class="kpi-card saved-card">
-                <div class="kpi-label">💰 Money Saved</div>
-                <div class="kpi-value success" id="kpi-saved">$0</div>
-                <div class="kpi-sub">Total fraud amount we stopped</div>
-            </div>
-            <div class="kpi-card speed-card">
-                <div class="kpi-label">⚡ Detection Speed</div>
-                <div class="kpi-value purple" id="kpi-proc">0ms</div>
-                <div class="kpi-sub">How fast AI checks 1 payment (ms = milliseconds)</div>
-            </div>
-            <div class="kpi-card model-card">
-                <div class="kpi-label">🤖 AI Model Used</div>
-                <div class="kpi-value accent" style="font-size:1.1rem; line-height:1.6;" id="kpi-model">Loading…</div>
-                <div class="kpi-sub" id="kpi-model-f1">The machine learning model doing detection</div>
+
+            <!-- KPI ROW - FRESH / CURRENT SESSION (RIGHT) -->
+            <div style="background:rgba(10,30,25,0.5);border:1px solid rgba(0,255,157,0.2);border-radius:12px;padding:15px;">
+                <div style="margin-bottom:12px;">
+                    <span style="color:var(--accent2);font-size:0.85rem;font-weight:700;">⚡ FRESH / CURRENT SESSION</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                    <div class="kpi-card" style="padding:12px 10px; border-color:rgba(0,255,157,0.3);">
+                        <div class="kpi-label" style="font-size:0.6rem;">📦 Fresh</div>
+                        <div class="kpi-value" style="font-size:1.4rem; color:var(--accent2);" id="kpi-live-total">0</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Transactions</div>
+                    </div>
+                    <div class="kpi-card" style="padding:12px 10px; border-color:rgba(0,255,157,0.3);">
+                        <div class="kpi-label" style="font-size:0.6rem;">🚨 Fraud</div>
+                        <div class="kpi-value danger" style="font-size:1.4rem;" id="kpi-live-fraud">0</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Detected</div>
+                    </div>
+                    <div class="kpi-card" style="padding:12px 10px; border-color:rgba(0,255,157,0.3);">
+                        <div class="kpi-label" style="font-size:0.6rem;">📊 Rate</div>
+                        <div class="kpi-value warn" style="font-size:1.4rem;" id="kpi-live-rate">0%</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">Fraud %</div>
+                    </div>
+                    <div class="kpi-card" style="padding:12px 10px; border-color:rgba(0,255,157,0.3);">
+                        <div class="kpi-label" style="font-size:0.6rem;">⚡ Speed</div>
+                        <div class="kpi-value purple" style="font-size:1.4rem;" id="kpi-proc">0ms</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;">ms/transaction</div>
+                    </div>
+                    <div class="kpi-card" style="grid-column:span 2; padding:12px 10px; border-color:rgba(0,255,157,0.3);">
+                        <div class="kpi-label" style="font-size:0.6rem;">🤖 AI Model</div>
+                        <div class="kpi-value accent" style="font-size:1rem;" id="kpi-model">Loading…</div>
+                        <div class="kpi-sub" style="font-size:0.6rem;" id="kpi-model-f1">ML Model</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1031,6 +1080,48 @@
                 doughnutChart.data.datasets[0].data = [stats.total_fraud, stats.total_legit];
                 doughnutChart.update('none');
             }
+        }
+
+        // ── UPDATE BOTH HISTORICAL + LIVE STATS ─────────────────────────────────
+        function updateBothStats() {
+            // Historical (data till date) - from /stats
+            fetch('/stats').then(r => r.json()).then(stats => {
+                setText('kpi-total', stats.total_transactions.toLocaleString());
+                setText('kpi-fraud', stats.total_fraud.toLocaleString());
+                setText('kpi-rate', stats.fraud_rate.toFixed(2) + '%');
+                setText('kpi-saved', currency.format(stats.amount_saved));
+                // Add detection speed for historical data
+                if (stats.avg_processing_time) {
+                    setText('kpi-hist-speed', stats.avg_processing_time.toFixed(0) + 'ms');
+                } else {
+                    setText('kpi-hist-speed', '—');
+                }
+                if (doughnutChart) {
+                    doughnutChart.data.datasets[0].data = [stats.total_fraud, stats.total_legit];
+                    doughnutChart.update('none');
+                }
+            }).catch(() => { });
+
+            // Live/ Fresh (current session) - from /stats/live
+            fetch('/stats/live').then(r => r.json()).then(stats => {
+                setText('kpi-live-total', stats.total_transactions.toLocaleString());
+                setText('kpi-live-fraud', stats.total_fraud.toLocaleString());
+                setText('kpi-live-rate', stats.fraud_rate.toFixed(2) + '%');
+                setText('kpi-proc', stats.avg_processing_time ? stats.avg_processing_time.toFixed(0) + 'ms' : '—');
+                
+                const mi = stats.model_info;
+                if (mi && mi.model_name) {
+                    let simpleName = mi.model_name;
+                    if (simpleName.includes('(')) {
+                        simpleName = simpleName.substring(0, simpleName.indexOf('('));
+                    }
+                    document.getElementById('kpi-model').textContent = simpleName;
+                    const f1str = (mi.f1 != null) ? 'F1: ' + Number(mi.f1).toFixed(3) : '';
+                    const aucstr = (mi.auc != null) ? 'AUC: ' + Number(mi.auc).toFixed(3) : '';
+                    const sub = [f1str, aucstr].filter(Boolean).join(' | ') || 'AutoML best model';
+                    document.getElementById('kpi-model-f1').textContent = sub;
+                }
+            }).catch(() => { });
         }
 
         function setText(id, val) {
@@ -1497,7 +1588,7 @@
                 }
             }).catch(() => { });
 
-            fetch('/stats').then(r => r.json()).then(updateKpis).catch(() => { });
+            updateBothStats();
             refreshLocationChart();
         }
 
@@ -1507,8 +1598,8 @@
             initLocationChart();
             connectWs();
 
-            // Initial data
-            fetch('/stats').then(r => r.json()).then(updateKpis).catch(() => { });
+            // Initial data - both historical + live session data
+            updateBothStats();
             fetch('/category-stats').then(r => r.json()).then(initCategoryChart).catch(() => { });
             fetch('/hourly-stats').then(r => r.json()).then(initHourlyChart).catch(() => { });
             refreshLocationChart();  // pre-populate from existing fraud history

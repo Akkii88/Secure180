@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>FraudShield AI - Tableau Web Data Connector</title>
+    <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+        .status-dot.error { background: #f87171; }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #020810;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .data-preview {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        th { color: #00d4ff; }
+        .high { color: #f87171; }
+        .medium { color: #fbbf24; }
+        .low { color: #4ade80; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ FraudShield AI</h1>
+        <p class="subtitle">Tableau Web Data Connector - Real-time Fraud Data</p>
+        
+        <div class="card">
+            <h3>📊 Connection Status</h3>
+            <div class="status-indicator">
+                <div class="status-dot" id="connectionStatus"></div>
+                <span id="statusText">Ready to connect</span>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="fetchData()">📥 Fetch Data</button>
+                <button class="btn" onclick="showSchema()">📋 Show Schema</button>
+            </div>
+        </div>
+        
+        <div class="card" id="dataSection" style="display: none;">
+            <h3>📈 Data Preview</h3>
+            <div class="data-preview">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Fraud Prob</th>
+                            <th>Prediction</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataBody"></tbody>
+                </table>
+            </div>
+            <p style="color: #94a3b8; margin-top: 15px;">
+                Total rows: <span id="totalRows">0</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Tableau Web Data Connector API
+        (function() {
+            var myConnector = tableau.makeConnector();
+            
+            // Define the schema
+            myConnector.getSchema = function(schemaCallback) {
+                var cols = [
+                    { id: "id", alias: "Transaction ID", dataType: tableau.dataTypeEnum.int },
+                    { id: "transaction_id", alias: "Transaction UUID", dataType: tableau.dataTypeEnum.string },
+                    { id: "timestamp", alias: "Timestamp", dataType: tableau.dataTypeEnum.datetime },
+                    { id: "amount", alias: "Amount", dataType: tableau.dataTypeEnum.float },
+                    { id: "merchant_category", alias: "Merchant Category", dataType: tableau.dataTypeEnum.string },
+                    { id: "location", alias: "Location", dataType: tableau.dataTypeEnum.string },
+                    { id: "fraud_probability", alias: "Fraud Probability", dataType: tableau.dataTypeEnum.float },
+                    { id: "prediction", alias: "Prediction (0=Legit, 1=Fraud)", dataType: tableau.dataTypeEnum.int },
+                    { id: "risk_level", alias: "Risk Level", dataType: tableau.dataTypeEnum.string },
+                    { id: "processing_time_ms", alias: "Processing Time (ms)", dataType: tableau.dataTypeEnum.float },
+                    { id: "model_used", alias: "Model Used", dataType: tableau.dataTypeEnum.string }
+                ];
+                
+                var tableSchema = {
+                    id: "fraud_transactions",
+                    alias: "FraudShield Transactions",
+                    columns: cols
+                };
+                
+                schemaCallback([tableSchema]);
+            };
+            
+            // Fetch data from API
+            myConnector.getData = function(table, doneCallback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "http://localhost:8899/data");
+                xhr.setRequestHeader("Content-Type", "application/json");
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        var data = response.transactions || [];
+                        
+                        var tableData = data.map(function(row) {
+                            return {
+                                "id": row.id,
+                                "transaction_id": row.transaction_id,
+                                "timestamp": row.timestamp,
+                                "amount": row.amount,
+                                "merchant_category": row.merchant_category,
+                                "location": row.location,
+                                "fraud_probability": row.fraud_probability,
+                                "prediction": row.prediction,
+                                "risk_level": row.risk_level,
+                                "processing_time_ms": row.processing_time_ms || 0,
+                                "model_used": row.model_used || "AutoML"
+                            };
+                        });
+                        
+                        table.appendRows(tableData);
+                        doneCallback();
+                    } else {
+                        console.error("Error fetching data:", xhr.statusText);
+                        doneCallback();
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    console.error("Network error");
+                    doneCallback();
+                };
+                
+                xhr.send();
+            };
+            
+            // Register the connector
+            tableau.registerConnector(myConnector);
+            
+            // Initialize
+            window.tableauConnector = myConnector;
+        })();
+        
+        // UI Functions
+        var fetchedData = null;
+        
+        function fetchData() {
+            document.getElementById('statusText').textContent = 'Fetching data...';
+            document.getElementById('connectionStatus').classList.add('error');
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "http://localhost:8899/data");
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    fetchedData = response.transactions || [];
+                    
+                    document.getElementById('statusText').textContent = '✅ Connected - ' + fetchedData.length + ' rows';
+                    document.getElementById('connectionStatus').classList.remove('error');
+                    
+                    // Show preview
+                    var tbody = document.getElementById('dataBody');
+                    tbody.innerHTML = '';
+                    
+                    fetchedData.slice(0, 20).forEach(function(row) {
+                        var tr = document.createElement('tr');
+                        var riskClass = row.risk_level === 'HIGH' ? 'high' : (row.risk_level === 'MEDIUM' ? 'medium' : 'low');
+                        var predClass = row.prediction === 1 ? 'high' : 'low';
+                        
+                        tr.innerHTML = '<td>' + row.id + '</td>' +
+                            '<td>$' + row.amount.toFixed(2) + '</td>' +
+                            '<td>' + row.merchant_category + '</td>' +
+                            '<td>' + (row.fraud_probability * 100).toFixed(1) + '%</td>' +
+                            '<td class="' + predClass + '">' + (row.prediction === 1 ? 'FRAUD' : 'LEGIT') + '</td>' +
+                            '<td class="' + riskClass + '">' + row.risk_level + '</td>';
+                        tbody.appendChild(tr);
+                    });
+                    
+                    document.getElementById('totalRows').textContent = fetchedData.length;
+                    document.getElementById('dataSection').style.display = 'block';
+                } else {
+                    document.getElementById('statusText').textContent = '❌ Connection failed';
+                    document.getElementById('connectionStatus').classList.add('error');
+                }
+            };
+            xhr.send();
+        }
+        
+        function showSchema() {
+            tableau.connectionName = "FraudShield AI Data";
+            tableau.submit();
+        }
+        
+        // Auto-fetch on load
+        fetchData();
+    </script>
+</body>
+</html>

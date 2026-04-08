@@ -38,6 +38,15 @@ try:
 except ImportError:
     push_to_power_bi = None  # Fallback if Power BI not configured
 
+# PostgreSQL for live Tableau connection
+try:
+    from database.postgres_handler import insert_transaction_postgres
+
+    POSTGRES_ENABLED = True
+except ImportError:
+    insert_transaction_postgres = None
+    POSTGRES_ENABLED = False
+
 app = FastAPI(title="FraudShield AI", version="1.0")
 
 app.add_middleware(
@@ -106,6 +115,13 @@ async def transaction_loop():
             except Exception:
                 pass  # Don't fail the main flow if Power BI fails
 
+        # Push to PostgreSQL for live Tableau connection
+        if POSTGRES_ENABLED and insert_transaction_postgres:
+            try:
+                insert_transaction_postgres(result)
+            except Exception:
+                pass  # Don't fail if PostgreSQL fails
+
         await manager.broadcast({"type": "transaction", "data": result})
 
         # Broadcast stats every 5 transactions
@@ -122,6 +138,18 @@ async def transaction_loop():
 @app.on_event("startup")
 async def startup_event():
     init_db()
+    # Initialize PostgreSQL for live Tableau
+    if POSTGRES_ENABLED:
+        try:
+            from database.postgres_handler import init_postgres_db, clear_transactions
+
+            init_postgres_db()
+            clear_transactions()  # Fresh start - clear old data!
+            print(
+                "✅ PostgreSQL initialized for Tableau live connection (fresh start!)"
+            )
+        except Exception as e:
+            print(f"⚠️ PostgreSQL init failed: {e}")
     try:
         detector.load()
     except Exception:
@@ -186,6 +214,45 @@ def health_check():
 def stats_endpoint():
     """Return aggregated fraud statistics and model info."""
     return _get_stats_internal()
+
+
+@app.get("/stats/live")
+def stats_live_endpoint():
+    """Return fresh stats from current session (PostgreSQL - matches Tableau)."""
+    from database.postgres_handler import get_fraud_stats_postgres
+
+    stats = get_fraud_stats_postgres()
+    model_info = get_latest_model_info()
+    if not model_info and detector.model is not None:
+        model_name = type(detector.model).__name__
+        friendly = (
+            re.sub(r"(?<=[a-z])(?=[A-Z])", " ", model_name)
+            .replace("Classifier", "")
+            .strip()
+        )
+        model_info = {
+            "model_name": friendly or model_name,
+            "f1": None,
+            "auc": None,
+            "accuracy": None,
+        }
+
+    return {
+        "total_transactions": stats.get("total_transactions", 0),
+        "total_fraud": stats.get("fraud_detected", 0),
+        "high_risk": stats.get("high_risk", 0),
+        "medium_risk": stats.get("medium_risk", 0),
+        "low_risk": stats.get("low_risk", 0),
+        "avg_fraud_probability": stats.get("avg_fraud_probability", 0),
+        "fraud_rate": (
+            stats.get("fraud_detected", 0) / stats.get("total_transactions", 1)
+        )
+        * 100
+        if stats.get("total_transactions", 0) > 0
+        else 0.0,
+        "session": "live",
+        "model_info": model_info,
+    }
 
 
 @app.get("/transactions")

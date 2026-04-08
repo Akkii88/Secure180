@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>FraudShield AI - Tableau Web Data Connector</title>
+    <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #00d4ff; text-align: center; font-size: 2.5rem; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 30px; }
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0891b2 100%);
+            color: #020810;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ FraudShield AI</h1>
+        <p class="subtitle">Tableau Web Data Connector (Offline Mode)</p>
+        
+        <div class="card">
+            <h3>📊 Data Status</h3>
+            <p id="status">Loading embedded data...</p>
+            <p id="count" class="success"></p>
+        </div>
+        
+        <div class="card">
+            <h3>🔗 Connect to Tableau</h3>
+            <p>Click the button below to open Tableau and import the data:</p>
+            <button class="btn" onclick="connectToTableau()">📊 Open in Tableau</button>
+        </div>
+        
+        <div class="card">
+            <h3>📈 Data Preview</h3>
+            <div style="background:#0f172a; padding:15px; border-radius:8px; max-height:200px; overflow:auto;">
+                <pre id="preview" style="margin:0; font-size:12px;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Embedded data from SQLite database
+    var TRANSACTIONS = [{"id": 10421, "transaction_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "timestamp": "2026-04-09 01:30:12", "amount": 4221.49, "merchant_category": "Unknown", "location": "Unknown/VPN", "fraud_probability": 0.84, "prediction": 1, "risk_level": "HIGH"}, {"id": 10420, "transaction_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901", "timestamp": "2026-04-09 01:29:54", "amount": 142.81, "merchant_category": "Grocery", "location": "New York/USA", "fraud_probability": 0.03, "prediction": 0, "risk_level": "LOW"}, {"id": 10419, "transaction_id": "c3d4e5f6-a7b8-9012-cdef-123456789012", "timestamp": "2026-04-09 01:29:36", "amount": 246.69, "merchant_category": "Electronics", "location": "Sydney/Australia", "fraud_probability": 0.08, "prediction": 0, "risk_level": "LOW"}, {"id": 10418, "transaction_id": "d4e5f6a7-b8c9-0123-defg-234567890123", "timestamp": "2026-04-09 01:29:18", "amount": 66.45, "merchant_category": "Gas Station", "location": "Sydney/Australia", "fraud_probability": 0.04, "prediction": 0, "risk_level": "LOW"}, {"id": 10417, "transaction_id": "e5f6a7b8-c9d0-1234-efgh-345678901234", "timestamp": "2026-04-09 01:29:00", "amount": 207.67, "merchant_category": "Restaurant", "location": "New York/USA", "fraud_probability": 0.07, "prediction": 0, "risk_level": "LOW"}];
+    </script>
+
+    <script>
+        // Update UI with data
+        document.getElementById('status').innerHTML = '<span class="success">✅ Data loaded successfully!</span>';
+        document.getElementById('count').textContent = 'Total transactions: ' + TRANSACTIONS.length;
+        
+        // Show preview
+        var previewText = TRANSACTIONS.slice(0, 3).map(function(t) {
+            return 'ID: ' + t.id + ' | Amount: $' + t.amount.toFixed(2) + ' | Category: ' + t.merchant_category + ' | Risk: ' + t.risk_level + ' | Fraud: ' + (t.prediction === 1 ? 'YES' : 'NO');
+        }).join('\n');
+        document.getElementById('preview').textContent = previewText + '\n\n... and ' + (TRANSACTIONS.length - 3) + ' more rows';
+
+        // ==================== TABLEAU CONNECTOR ====================
+        
+        (function() {
+            var myConnector = tableau.makeConnector();
+            
+            myConnector.getSchema = function(schemaCallback) {
+                var cols = [
+                    { id: "id", alias: "Transaction ID", dataType: tableau.dataTypeEnum.int },
+                    { id: "transaction_id", alias: "Transaction UUID", dataType: tableau.dataTypeEnum.string },
+                    { id: "timestamp", alias: "Timestamp", dataType: tableau.dataTypeEnum.string },
+                    { id: "amount", alias: "Amount ($)", dataType: tableau.dataTypeEnum.float },
+                    { id: "merchant_category", alias: "Merchant Category", dataType: tableau.dataTypeEnum.string },
+                    { id: "location", alias: "Location", dataType: tableau.dataTypeEnum.string },
+                    { id: "fraud_probability", alias: "Fraud Probability", dataType: tableau.dataTypeEnum.float },
+                    { id: "prediction", alias: "Prediction", dataType: tableau.dataTypeEnum.int },
+                    { id: "risk_level", alias: "Risk Level", dataType: tableau.dataTypeEnum.string }
+                ];
+                
+                var tableSchema = {
+                    id: "fraud_transactions",
+                    alias: "FraudShield Transactions",
+                    columns: cols
+                };
+                
+                schemaCallback([tableSchema]);
+            };
+            
+            myConnector.getData = function(table, doneCallback) {
+                var tableData = TRANSACTIONS.map(function(row) {
+                    return {
+                        "id": row.id,
+                        "transaction_id": row.transaction_id,
+                        "timestamp": row.timestamp,
+                        "amount": row.amount,
+                        "merchant_category": row.merchant_category,
+                        "location": row.location,
+                        "fraud_probability": row.fraud_probability,
+                        "prediction": row.prediction,
+                        "risk_level": row.risk_level
+                    };
+                });
+                
+                table.appendRows(tableData);
+                doneCallback();
+            };
+            
+            tableau.registerConnector(myConnector);
+        })();
+        
+        function connectToTableau() {
+            tableau.connectionName = "FraudShield AI - Embedded Data";
+            tableau.submit();
+        }
+    </script>
+</body>
+</html>

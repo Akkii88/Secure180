@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>FraudShield AI - Live Tableau Connector</title>
+    <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(30, 30, 50, 0.8);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        /* Status Indicators */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .dot.green { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .dot.blue { background: #00d4ff; box-shadow: 0 0 10px #00d4ff; }
+        .dot.red { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+        .dot.yellow { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2a2a4e 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .stat-box .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .stat-box .label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Log */
+        .log-container {
+            background: #0a0a0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #222;
+        }
+        .log-entry .time { color: #666; }
+        .log-entry .msg { color: #aaa; }
+        .log-entry.success .msg { color: #00ff88; }
+        .log-entry.error .msg { color: #ff4444; }
+        .log-entry.info .msg { color: #00d4ff; }
+        
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th { color: #00d4ff; font-weight: 600; }
+        .risk-high { color: #ff4444; }
+        .risk-medium { color: #ffaa00; }
+        .risk-low { color: #00ff88; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ FraudShield AI</h1>
+            <p style="color:#888; margin-top:10px;">Real-time Fraud Detection → Tableau Live Data</p>
+        </div>
+        
+        <!-- Connection Status -->
+        <div class="card">
+            <h3 style="color:#00d4ff; margin-bottom:15px;">📡 Connection Status</h3>
+            <div class="status-row">
+                <div class="dot green"></div>
+                <span><strong>API Server:</strong> <span id="api-status">Connecting...</span></span>
+            </div>
+            <div class="status-row">
+                <div class="dot blue"></div>
+                <span><strong>Live Data:</strong> <span id="data-status">Waiting...</span></span>
+            </div>
+            <div class="status-row">
+                <div class="dot yellow"></div>
+                <span><strong>Tableau:</strong> <span id="tableau-status">Ready to connect</span></span>
+            </div>
+        </div>
+        
+        <!-- Live Stats -->
+        <div class="card">
+            <h3 style="color:#00d4ff; margin-bottom:15px;">📊 Live Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="value" id="total-trans">0</div>
+                    <div class="label">Total Transactions</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="fraud-count" style="color:#ff4444">0</div>
+                    <div class="label">Fraud Detected</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="high-risk" style="color:#ffaa00">0</div>
+                    <div class="label">High Risk</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="avg-prob" style="color:#00ff88">0%</div>
+                    <div class="label">Avg Fraud Probability</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Connect to Tableau -->
+        <div class="card">
+            <h3 style="color:#00d4ff; margin-bottom:15px;">🔗 Connect to Tableau</h3>
+            <p style="margin-bottom:15px; color:#aaa;">
+                Click the button below to open Tableau Desktop and import live data:
+            </p>
+            <button class="btn" onclick="connectToTableau()">📊 Open in Tableau (Live Data)</button>
+            <p style="margin-top:15px; color:#666; font-size:0.9rem;">
+                💡 Make sure your API server is running: <code>python run_system.py</code>
+            </p>
+        </div>
+        
+        <!-- Live Transactions -->
+        <div class="card">
+            <h3 style="color:#00d4ff; margin-bottom:15px;">📝 Recent Transactions</h3>
+            <table id="transactions-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Fraud Prob</th>
+                        <th>Risk</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-body">
+                    <tr><td colspan="6" style="text-align:center; color:#666;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Activity Log -->
+        <div class="card">
+            <h3 style="color:#00d4ff; margin-bottom:15px;">📋 Activity Log</h3>
+            <div class="log-container" id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Live transaction data storage
+        var LIVE_TRANSACTIONS = [];
+        var CURRENT_STATS = {
+            total_transactions: 0,
+            fraud_detected: 0,
+            high_risk: 0,
+            medium_risk: 0,
+            low_risk: 0,
+            avg_fraud_probability: 0
+        };
+        
+        // ============================================
+        // Fetch live data from API
+        // ============================================
+        async function fetchLiveData() {
+            try {
+                // Fetch stats
+                const statsRes = await fetch('http://localhost:8000/stats');
+                const stats = await statsRes.json();
+                
+                document.getElementById('api-status').innerHTML = '<span style="color:#00ff88">Connected</span>';
+                document.getElementById('total-trans').textContent = stats.total_transactions || '0';
+                document.getElementById('fraud-count').textContent = stats.fraud_detected || '0';
+                document.getElementById('high-risk').textContent = stats.high_risk || '0';
+                
+                const avgProb = (stats.avg_fraud_probability || 0) * 100;
+                document.getElementById('avg-prob').textContent = avgProb.toFixed(1) + '%';
+                
+                CURRENT_STATS = stats;
+                
+                // Fetch recent transactions
+                const txnRes = await fetch('http://localhost:8000/transactions?limit=50');
+                const transactions = await txnRes.json();
+                
+                LIVE_TRANSACTIONS = transactions.map(t => ({
+                    id: t.id,
+                    transaction_id: t.transaction_id,
+                    timestamp: t.timestamp,
+                    amount: parseFloat(t.amount),
+                    merchant_category: t.merchant_category,
+                    location: t.location,
+                    fraud_probability: parseFloat(t.fraud_probability),
+                    prediction: t.prediction,
+                    risk_level: t.risk_level
+                }));
+                
+                document.getElementById('data-status').innerHTML = '<span style="color:#00ff88">Streaming live</span> (' + LIVE_TRANSACTIONS.length + ' records)';
+                
+                // Update table
+                updateTransactionTable();
+                
+                addLog('info', 'Fetched ' + transactions.length + ' transactions from API');
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                document.getElementById('api-status').innerHTML = '<span style="color:#ff4444">Not connected</span>';
+                document.getElementById('data-status').innerHTML = '<span style="color:#ff4444">Error: ' + error.message + '</span>';
+                addLog('error', 'Failed to connect to API: ' + error.message);
+            }
+        }
+        
+        function updateTransactionTable() {
+            const tbody = document.getElementById('transactions-body');
+            const rows = LIVE_TRANSACTIONS.slice(0, 10).map(t => {
+                const riskClass = t.risk_level === 'HIGH' ? 'risk-high' : 
+                                  t.risk_level === 'MEDIUM' ? 'risk-medium' : 'risk-low';
+                return `<tr>
+                    <td>${t.id}</td>
+                    <td>$${t.amount.toFixed(2)}</td>
+                    <td>${t.merchant_category}</td>
+                    <td>${t.location}</td>
+                    <td>${(t.fraud_probability * 100).toFixed(1)}%</td>
+                    <td class="${riskClass}">${t.risk_level}</td>
+                </tr>`;
+            }).join('');
+            tbody.innerHTML = rows || '<tr><td colspan="6" style="text-align:center; color:#666;">No data</td></tr>';
+        }
+        
+        function addLog(type, msg) {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString();
+            container.innerHTML = `<div class="log-entry ${type}">
+                <span class="time">[${time}]</span>
+                <span class="msg">${msg}</span>
+            </div>` + container.innerHTML;
+        }
+        
+        // Refresh data every 3 seconds
+        fetchLiveData();
+        setInterval(fetchLiveData, 3000);
+        
+        // ============================================
+        // Tableau Web Data Connector
+        // ============================================
+        (function() {
+            var myConnector = tableau.makeConnector();
+            
+            myConnector.getSchema = function(schemaCallback) {
+                var cols = [
+                    { id: "id", alias: "ID", dataType: tableau.dataTypeEnum.int },
+                    { id: "transaction_id", alias: "Transaction ID", dataType: tableau.dataTypeEnum.string },
+                    { id: "timestamp", alias: "Timestamp", dataType: tableau.dataTypeEnum.string },
+                    { id: "amount", alias: "Amount ($)", dataType: tableau.dataTypeEnum.float },
+                    { id: "merchant_category", alias: "Merchant Category", dataType: tableau.dataTypeEnum.string },
+                    { id: "location", alias: "Location", dataType: tableau.dataTypeEnum.string },
+                    { id: "fraud_probability", alias: "Fraud Probability", dataType: tableau.dataTypeEnum.float },
+                    { id: "prediction", alias: "Prediction (0=Legit, 1=Fraud)", dataType: tableau.dataTypeEnum.int },
+                    { id: "risk_level", alias: "Risk Level", dataType: tableau.dataTypeEnum.string }
+                ];
+                
+                var tableSchema = {
+                    id: "fraud_transactions_live",
+                    alias: "FraudShield Live Data",
+                    columns: cols
+                };
+                
+                schemaCallback([tableSchema]);
+            };
+            
+            myConnector.getData = function(table, doneCallback) {
+                // Use live data from API
+                var tableData = LIVE_TRANSACTIONS.map(function(row) {
+                    return {
+                        "id": row.id,
+                        "transaction_id": row.transaction_id,
+                        "timestamp": row.timestamp,
+                        "amount": row.amount,
+                        "merchant_category": row.merchant_category,
+                        "location": row.location,
+                        "fraud_probability": row.fraud_probability,
+                        "prediction": row.prediction,
+                        "risk_level": row.risk_level
+                    };
+                });
+                
+                table.appendRows(tableData);
+                document.getElementById('tableau-status').innerHTML = '<span style="color:#00ff88">Data ready!</span>';
+                addLog('success', 'Pushed ' + tableData.length + ' rows to Tableau');
+                doneCallback();
+            };
+            
+            tableau.registerConnector(myConnector);
+        })();
+        
+        function connectToTableau() {
+            // First ensure we have data
+            fetchLiveData().then(() => {
+                tableau.connectionName = "FraudShield AI - Live";
+                tableau.submit();
+            });
+        }
+    </script>
+</body>
+</html>
